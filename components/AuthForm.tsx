@@ -25,6 +25,8 @@ import { Input } from "@/components/ui/input";
 import Link from "next/link";
 import { FIELD_NAMES, FIELD_TYPES } from "@/constants";
 import ImageUpload from "@/components/ImageUpload";
+import { useToast } from "@/hooks/use-toast";
+import { useRouter } from "next/navigation";
 
 interface Props<T extends FieldValues> {
   schema: ZodType<T>;
@@ -33,12 +35,17 @@ interface Props<T extends FieldValues> {
   type: "SIGN_IN" | "SIGN_UP";
 }
 
+
+
 const AuthForm = <T extends FieldValues>({
   type,
   schema,
   defaultValues,
   onSubmit,
 }: Props<T>) => {
+  const router = useRouter();
+  const {toast} = useToast();
+  
   const isSignIn = type === "SIGN_IN";
 
   const form: UseFormReturn<T> = useForm({
@@ -46,7 +53,27 @@ const AuthForm = <T extends FieldValues>({
     defaultValues: defaultValues as DefaultValues<T>,
   });
 
-  const handleSubmit: SubmitHandler<T> = async (data) => {};
+  const handleSubmit: SubmitHandler<T> = async (data) => {
+    
+    const result = await onSubmit(data);
+    console.log(result)
+
+    if (result.success) {
+      toast({
+        title: "Success",
+        description: isSignIn
+          ? "You have successfully signed in"
+          : "You have successfully signed up"
+      });
+      router.push("/")
+    } else {
+      toast({
+        title: `Error ${isSignIn ? "signing in" : "signing up"}`,
+        description: result.error ?? "An error occurred.",
+        variant: "destructive"
+      })
+    }
+  };
 
   return (
     <div className="flex flex-col gap-4">
@@ -93,14 +120,14 @@ const AuthForm = <T extends FieldValues>({
             />
           ))}
 
-          <Button type="submit">Submit</Button>
+          <Button type="submit" className="form-btn">Submit</Button>
         </form>
       </Form>
       <p className="text-center text-base font-medium">
         {isSignIn ? "New to BookWise? " : "Already have an account? "}
 
         <Link
-          href={isSignIn ? "/signup" : "/signin"}
+          href={isSignIn ? "/sign-up" : "/sign-in"}
           className="font-bold text-primary"
         >
           {isSignIn ? "Create an account" : "Sign in"}
