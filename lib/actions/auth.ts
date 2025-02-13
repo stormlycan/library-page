@@ -35,40 +35,41 @@ export const signInWithCredentials = async (params: Pick<AuthCredentials, "email
     }
 };
 
-export const signUp =  async (params: AuthCredentials) => {
-    const {fullName, email, password, universityId, universityCard} = params;
+export const signUp = async (params: AuthCredentials): Promise<{ success: boolean; error?: string }> => {
+    const { fullName, email, password, universityId, universityCard } = params;
 
-    const ip =  (await headers()).get('x-forwarded-for') || "127.0.0.1";
+    const ip = (await headers()).get('x-forwarded-for') || "127.0.0.1";
 
-    const {success} = await ratelimit.limit(ip);
+    const { success } = await ratelimit.limit(ip);
 
-    if (!success)  return redirect("/too-fast")
+    if (!success) return redirect("/too-fast");
 
-    const existingUser =  await db
+    const existingUser = await db
         .select()
         .from(users)
         .where(eq(users.email, email))
         .limit(1);
 
-        if (existingUser.length>0) {
-            return { success: false, error: "User already exists"};
-        }
+    if (existingUser.length > 0) {
+        return { success: false, error: "User already exists" };
+    }
 
-        const hashedPassword =  await hash(password, 10);
+    const hashedPassword = await hash(password, 10);
 
-        try {
-            await db.insert(users).values({
-                fullName,
-                email,
-                universityCard,
-                password: hashedPassword,
-                universityId,
-            })
+    try {
+        await db.insert(users).values({
+            fullName,
+            email,
+            universityCard,
+            password: hashedPassword,
+            universityId,
+        });
 
-            await signInWithCredentials({email, password})
+        await signInWithCredentials({ email, password });
 
-            return { success: true };
-        } catch (error) {
-            console.log(error, 'SignUp error')
-        }
-}
+        return { success: true };
+    } catch (error) {
+        console.log(error, 'SignUp error');
+        return { success: false, error: "SignUp error" };
+    }
+};
