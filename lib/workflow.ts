@@ -21,7 +21,7 @@ export const sendEmail = async ({email, subject, message}:{email: string, subjec
       provider: QstashResend({ token: config.env.resendToken }),
     },
     body: {
-      from: "Storm <mail-library-page.stormlycan.in>",
+      from: "Storm <project@stormlycan.in>",
       to: [email],
       subject,
       html: message,
