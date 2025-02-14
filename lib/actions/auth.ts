@@ -3,73 +3,87 @@
 import { signIn } from "@/auth";
 import { db } from "@/database/drizzle";
 import { users } from "@/database/schema";
+import config from "@/lib/config";
 import ratelimit from "@/lib/rateLimit";
+import { workflowClient } from "@/lib/workflow";
 import { hash } from "bcryptjs";
 import { eq } from "drizzle-orm";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 
+export const signInWithCredentials = async (
+  params: Pick<AuthCredentials, "email" | "password">
+) => {
+  const { email, password } = params;
 
-export const signInWithCredentials = async (params: Pick<AuthCredentials, "email" | "password">) => {
-    const {email, password} = params;
+  const ip = (await headers()).get("x-forwarded-for") || "127.0.0.1";
 
+  const { success } = await ratelimit.limit(ip);
 
-    const ip =  (await headers()).get('x-forwarded-for') || "127.0.0.1";
+  if (!success) return redirect("/too-fast");
 
-    const {success} = await ratelimit.limit(ip);
+  try {
+    const result = await signIn("credentials", {
+      email,
+      password,
+      redirect: false,
+    });
 
-    if (!success)  return redirect("/too-fast");
-    
-    try {
-        const result =  await signIn('credentials', {
-            email, password, redirect: false
-        })
- 
-        if (result?.error) {
-            return { success: false, error: result.error}
-        }
-        return {success: true}
-    } catch (error) {
-        console.log(error, "SignIn error")
-        return { success: false, error: "Signin error"}
+    if (result?.error) {
+      return { success: false, error: result.error };
     }
+    return { success: true };
+  } catch (error) {
+    console.log(error, "SignIn error");
+    return { success: false, error: "Signin error" };
+  }
 };
 
-export const signUp = async (params: AuthCredentials): Promise<{ success: boolean; error?: string }> => {
-    const { fullName, email, password, universityId, universityCard } = params;
+export const signUp = async (
+  params: AuthCredentials
+): Promise<{ success: boolean; error?: string }> => {
+  const { fullName, email, password, universityId, universityCard } = params;
 
-    const ip = (await headers()).get('x-forwarded-for') || "127.0.0.1";
+  const ip = (await headers()).get("x-forwarded-for") || "127.0.0.1";
 
-    const { success } = await ratelimit.limit(ip);
+  const { success } = await ratelimit.limit(ip);
 
-    if (!success) return redirect("/too-fast");
+  if (!success) return redirect("/too-fast");
 
-    const existingUser = await db
-        .select()
-        .from(users)
-        .where(eq(users.email, email))
-        .limit(1);
+  const existingUser = await db
+    .select()
+    .from(users)
+    .where(eq(users.email, email))
+    .limit(1);
 
-    if (existingUser.length > 0) {
-        return { success: false, error: "User already exists" };
-    }
+  if (existingUser.length > 0) {
+    return { success: false, error: "User already exists" };
+  }
 
-    const hashedPassword = await hash(password, 10);
+  const hashedPassword = await hash(password, 10);
 
-    try {
-        await db.insert(users).values({
-            fullName,
-            email,
-            universityCard,
-            password: hashedPassword,
-            universityId,
-        });
+  try {
+    await db.insert(users).values({
+      fullName,
+      email,
+      universityCard,
+      password: hashedPassword,
+      universityId,
+    });
 
-        await signInWithCredentials({ email, password });
+    await workflowClient.trigger({
+      url: `${config.env.prodApiEndpoint}/api/workflow/onboarding`,
+      body: {
+        email,
+        fullName,
+      },
+    });
 
-        return { success: true };
-    } catch (error) {
-        console.log(error, 'SignUp error');
-        return { success: false, error: "SignUp error" };
-    }
+    await signInWithCredentials({ email, password });
+
+    return { success: true };
+  } catch (error) {
+    console.log(error, "SignUp error");
+    return { success: false, error: "SignUp error" };
+  }
 };
