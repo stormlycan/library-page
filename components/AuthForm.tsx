@@ -24,9 +24,9 @@ import {
 import { Input } from "@/components/ui/input";
 import Link from "next/link";
 import { FIELD_NAMES, FIELD_TYPES } from "@/constants";
-import ImageUpload from "@/components/ImageUpload";
 import { useToast } from "@/hooks/use-toast";
 import { useRouter } from "next/navigation";
+import FileUpload from "@/components/FileUpload";
 
 interface Props<T extends FieldValues> {
   schema: ZodType<T>;
@@ -35,8 +35,6 @@ interface Props<T extends FieldValues> {
   type: "SIGN_IN" | "SIGN_UP";
 }
 
-
-
 const AuthForm = <T extends FieldValues>({
   type,
   schema,
@@ -44,8 +42,8 @@ const AuthForm = <T extends FieldValues>({
   onSubmit,
 }: Props<T>) => {
   const router = useRouter();
-  const {toast} = useToast();
-  
+  const { toast } = useToast();
+
   const isSignIn = type === "SIGN_IN";
 
   const form: UseFormReturn<T> = useForm({
@@ -54,24 +52,22 @@ const AuthForm = <T extends FieldValues>({
   });
 
   const handleSubmit: SubmitHandler<T> = async (data) => {
-    
     const result = await onSubmit(data);
-    console.log(result)
 
     if (result.success) {
       toast({
         title: "Success",
         description: isSignIn
           ? "You have successfully signed in"
-          : "You have successfully signed up"
+          : "You have successfully signed up",
       });
-      router.push("/")
+      router.push("/");
     } else {
       toast({
         title: `Error ${isSignIn ? "signing in" : "signing up"}`,
         description: result.error ?? "An error occurred.",
-        variant: "destructive"
-      })
+        variant: "destructive",
+      });
     }
   };
 
@@ -86,7 +82,7 @@ const AuthForm = <T extends FieldValues>({
           : "Please complete all fields and upload a valid university ID to gain access to the library"}
       </p>
       <Form {...form}>
-        <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-8">
+        <form onSubmit={form.handleSubmit(handleSubmit)} className="w-full space-y-8">
           {Object.keys(defaultValues).map((field) => (
             <FormField
               key={field}
@@ -99,7 +95,14 @@ const AuthForm = <T extends FieldValues>({
                   </FormLabel>
                   <FormControl>
                     {field.name === "universityCard" ? (
-                      <ImageUpload onFileChange={field.onChange} />
+                      <FileUpload
+                        type="image"
+                        accept="image/*"
+                        placeholder="Upload your ID"
+                        folder="ids"
+                        variant="dark"
+                        onFileChange={field.onChange}
+                      />
                     ) : (
                       <Input
                         required
@@ -111,9 +114,6 @@ const AuthForm = <T extends FieldValues>({
                       />
                     )}
                   </FormControl>
-                  <FormDescription>
-                    This is your public display name.
-                  </FormDescription>
                   <FormMessage />
                 </FormItem>
               )}

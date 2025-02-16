@@ -8,6 +8,20 @@
       "when": 1739309450862,
       "tag": "0000_sweet_sage",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1739685457684,
+      "tag": "0001_right_screwball",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1739685571026,
+      "tag": "0002_gifted_the_professor",
+      "breakpoints": true
     }
   ]
 }

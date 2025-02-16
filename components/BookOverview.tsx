@@ -2,7 +2,7 @@ import BookCover from "@/components/BookCover";
 import { Button } from "@/components/ui/button";
 import Image from "next/image";
 
-const BookOverview = ({
+const  BookOverview = ({
   title,
   author,
   genre,
@@ -13,6 +13,8 @@ const BookOverview = ({
   coverUrl,
   description,
 }: Book) => {
+  console.log(coverColor)
+  console.log(coverUrl)
   return (
     <section className="book-overview">
       <div className="flex flex-1 flex-col gap-5">
