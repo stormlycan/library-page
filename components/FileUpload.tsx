@@ -8,7 +8,6 @@ import {
   IKVideo,
   ImageKitProvider,
   IKUpload,
-  ImageKitContext,
 } from "imagekitio-next";
 import Image from "next/image";
 import { useRef, useState } from "react";
