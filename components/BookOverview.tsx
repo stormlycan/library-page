@@ -2,6 +2,10 @@ import BookCover from "@/components/BookCover";
 import { Button } from "@/components/ui/button";
 import Image from "next/image";
 
+interface Props extends Book{
+  userId: string;
+}
+
 const  BookOverview = ({
   title,
   author,
@@ -12,9 +16,8 @@ const  BookOverview = ({
   coverColor,
   coverUrl,
   description,
-}: Book) => {
-  console.log(coverColor)
-  console.log(coverUrl)
+  userId,
+}: Props) => {
   return (
     <section className="book-overview">
       <div className="flex flex-1 flex-col gap-5">
